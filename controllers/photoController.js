@@ -3,15 +3,22 @@ import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 
 const createPhoto = async (req, res) => {
-  const result = await cloudinary.uploader.upload(
-    req.files.image.tempFilePath,
-    {
-      use_filename: true,
-      folder: 'social',
-    }
-  );
-
   try {
+    if (!req.files || !req.files.image) {
+      return res.status(400).json({
+        succeeded: false,
+        error: 'No image file uploaded',
+      });
+    }
+
+    const result = await cloudinary.uploader.upload(
+      req.files.image.tempFilePath,
+      {
+        use_filename: true,
+        folder: 'social',
+      }
+    );
+
     await Photo.create({
       name: req.body.name,
       description: req.body.description,
@@ -20,13 +27,16 @@ const createPhoto = async (req, res) => {
       image_id: result.public_id,
     });
 
-    fs.unlinkSync(req.files.image.tempFilePath);
+    if (fs.existsSync(req.files.image.tempFilePath)) {
+      fs.unlinkSync(req.files.image.tempFilePath);
+    }
 
     res.status(201).redirect('/users/dashboard');
   } catch (error) {
+    console.error('Create photo error:', error);
     res.status(500).json({
-      succeded: false,
-      error,
+      succeeded: false,
+      error: error.message || error,
     });
   }
 };
@@ -150,10 +160,15 @@ const deletePhoto = async (req, res) => {
 const updatePhoto = async (req, res) => {
   try {
     const photo = await Photo.findById(req.params.id);
+    if (!photo) {
+      return res.status(404).json({ succeeded: false, error: 'Photo not found' });
+    }
 
-    if (req.files) {
+    if (req.files && req.files.image) {
       const photoId = photo.image_id;
-      await cloudinary.uploader.destroy(photoId);
+      if (photoId) {
+        await cloudinary.uploader.destroy(photoId);
+      }
 
       const result = await cloudinary.uploader.upload(
         req.files.image.tempFilePath,
@@ -166,19 +181,22 @@ const updatePhoto = async (req, res) => {
       photo.url = result.secure_url;
       photo.image_id = result.public_id;
 
-      fs.unlinkSync(req.files.image.tempFilePath);
+      if (fs.existsSync(req.files.image.tempFilePath)) {
+        fs.unlinkSync(req.files.image.tempFilePath);
+      }
     }
 
     photo.name = req.body.name;
     photo.description = req.body.description;
 
-    photo.save();
+    await photo.save();
 
     res.status(200).redirect(`/photos/${req.params.id}`);
   } catch (error) {
+    console.error('Update photo error:', error);
     res.status(500).json({
-      succeded: false,
-      error,
+      succeeded: false,
+      error: error.message || error,
     });
   }
 };

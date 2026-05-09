@@ -2,7 +2,7 @@ import User from '../models/userModel.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import Photo from '../models/photoModel.js';
-import cloudinary from 'cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 
 const createUser = async (req, res) => {
@@ -194,13 +194,19 @@ const unfollow = async (req, res) => {
 const updateAvatar = async (req, res) => {
   try {
     if (!req.files || !req.files.avatar) {
-      return res.redirect('/users/dashboard');
+      return res.status(400).json({
+        succeeded: false,
+        error: 'No avatar file uploaded'
+      });
     }
 
     const user = await User.findById(res.locals.user._id);
+    if (!user) {
+      return res.status(404).json({ succeeded: false, error: 'User not found' });
+    }
     
     // Eski resmi sil
-    if(user.avatar.public_id) {
+    if(user.avatar && user.avatar.public_id) {
       await cloudinary.uploader.destroy(user.avatar.public_id);
     }
 
@@ -221,7 +227,10 @@ const updateAvatar = async (req, res) => {
     };
 
     await user.save();
-    fs.unlinkSync(req.files.avatar.tempFilePath); // Temp dosyayı sil
+    
+    if (fs.existsSync(req.files.avatar.tempFilePath)) {
+      fs.unlinkSync(req.files.avatar.tempFilePath);
+    }
 
     res.redirect('/users/dashboard');
 
@@ -229,7 +238,7 @@ const updateAvatar = async (req, res) => {
     console.error('Avatar update error:', error);
     res.status(500).json({
       succeeded: false,
-      error
+      error: error.message || error
     });
   }
 };

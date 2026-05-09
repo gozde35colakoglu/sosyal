@@ -34,7 +34,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
-app.use(fileUpload({ useTempFiles: true }));
+app.use(fileUpload({ 
+    useTempFiles: true, 
+    tempFileDir: '/tmp/',
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    abortOnLimit: true
+}));
 app.use(
     methodOverride('_method', {
       methods: ['POST', 'GET'],
