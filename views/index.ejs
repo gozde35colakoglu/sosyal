@@ -42,7 +42,7 @@
                     <% for (photo of photos) { %>
                         <div class="slider-item">
                             <a href="/photos/<%= photo._id %>" class="modern-photo-card">
-                                <img src="<%= photo.url %>" alt="<%= photo.name %>">
+                                <img src="<%= photo.url %>" alt="<%= photo.name %>" onerror="this.onerror=null;this.src='/images/cafe_default.jpg';">
                                 <div class="modern-photo-overlay">
                                     <p><%= photo.description.substring(0, 80) + "..." %></p>
                                 </div>
