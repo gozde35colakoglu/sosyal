@@ -183,9 +183,13 @@ allEventListners();
 // functions of all event listners
 function allEventListners() {
   // toggler icon click event
-  navToggler.addEventListener('click', togglerClick);
+  if (navToggler) {
+    navToggler.addEventListener('click', togglerClick);
+  }
   // nav links click event
-  navLinks.forEach( elem => elem.addEventListener('click', navLinkClick));
+  if (navLinks) {
+    navLinks.forEach( elem => elem.addEventListener('click', navLinkClick));
+  }
 }
 
 // togglerClick function
