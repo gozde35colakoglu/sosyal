@@ -88,18 +88,22 @@ const getAllPhotos = async (req, res) => {
 
 const getAPhoto = async (req, res) => {
   try {
-    const photo = await Photo.findById({ _id: req.params.id })
+    const photo = await Photo.findById(req.params.id)
       .populate('user')
       .populate('comments.postedBy');
+
+    if (!photo) {
+      return res.status(404).redirect('/photos');
+    }
 
     let isOwner = false;
     let isLiked = false;
     let isDisliked = false;
 
     if (res.locals.user) {
-      isOwner = photo.user.equals(res.locals.user._id);
-      isLiked = photo.likes.some(likeId => likeId.equals(res.locals.user._id));
-      isDisliked = photo.dislikes.some(dislikeId => dislikeId.equals(res.locals.user._id));
+      isOwner = photo.user && photo.user.equals(res.locals.user._id);
+      isLiked = photo.likes && photo.likes.some(likeId => likeId && likeId.equals(res.locals.user._id));
+      isDisliked = photo.dislikes && photo.dislikes.some(dislikeId => dislikeId && dislikeId.equals(res.locals.user._id));
     }
 
     res.status(200).render('photo', {
@@ -130,7 +134,7 @@ const deletePhoto = async (req, res) => {
     }
 
     // 2. Kullanıcı yetkisi kontrolü (Sadece fotoğraf sahibi silebilsin)
-    if (photo.user.toString() !== res.locals.user._id.toString()) {
+    if (!photo.user || photo.user.toString() !== res.locals.user._id.toString()) {
       return res.status(403).json({ 
         succeded: false, 
         error: "You have not authority!" 
@@ -301,7 +305,7 @@ const editComment = async (req, res) => {
     }
 
     // Only comment owner can edit
-    if (!comment.postedBy.equals(res.locals.user._id)) {
+    if (!comment.postedBy || !comment.postedBy.equals(res.locals.user._id)) {
       return res.status(403).json({ succeeded: false, error: 'Not authorized' });
     }
 
@@ -331,7 +335,9 @@ const deleteComment = async (req, res) => {
     }
 
     // Only comment owner or photo owner can delete
-    if (!comment.postedBy.equals(res.locals.user._id) && !photo.user.equals(res.locals.user._id)) {
+    const isCommentOwner = comment.postedBy && comment.postedBy.equals(res.locals.user._id);
+    const isPhotoOwner = photo.user && photo.user.equals(res.locals.user._id);
+    if (!isCommentOwner && !isPhotoOwner) {
       return res.status(403).json({ succeeded: false, error: 'Not authorized' });
     }
 

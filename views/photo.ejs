@@ -17,9 +17,9 @@
                 <div class="modern-card p-6">
                     <h2 class="text-gradient" style="font-size: 2rem; margin-bottom: 1rem;"><%= photo.name %></h2>
                     <p class="text-secondary mb-4"><%= photo.description %></p>
-                    <a href="/users/<%= photo.user._id %>" class="modern-btn modern-btn-outline" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                        <img src="<%= photo.user.avatar ? photo.user.avatar.url : '/images/profile_1.jpg' %>" alt="Avatar" class="modern-avatar" style="width: 24px; height: 24px;">
-                        Artist: <%= photo.user.username %>
+                    <a href="/users/<%= photo.user ? photo.user._id : '#' %>" class="modern-btn modern-btn-outline" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <img src="<%= (photo.user && photo.user.avatar) ? photo.user.avatar.url : '/images/profile_1.jpg' %>" alt="Avatar" class="modern-avatar" style="width: 24px; height: 24px;">
+                        Artist: <%= photo.user ? photo.user.username : 'Unknown Artist' %>
                     </a>
                     
                     <% if (isOwner) { %>
@@ -83,7 +83,7 @@
                                     </div>
                                     
                                     <!-- Comment Actions (Edit/Delete) -->
-                                    <% if (user && (comment.postedBy && comment.postedBy._id.equals(user._id) || photo.user._id.equals(user._id))) { %>
+                                    <% if (user && (comment.postedBy && comment.postedBy._id.equals(user._id) || (photo.user && photo.user._id.equals(user._id)))) { %>
                                         <div style="display: flex; gap: 0.5rem;">
                                             <% if (comment.postedBy && comment.postedBy._id.equals(user._id)) { %>
                                                 <button onclick="toggleEditComment('<%= comment._id %>')" class="text-secondary" style="background: none; border: none; cursor: pointer; padding: 4px; transition: color 0.2s;" title="Edit">
